@@ -1,0 +1,57 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-24 21:35:36
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-24 21:43:30
+ * @Description: 使用 HTML5 原生 canvas 画图（画了个矩形）
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      #canvas {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+      window.onload = () => {
+        const canvas = document.getElementById("canvas");
+
+        const { innerWidth, innerHeight } = window;
+
+        const ctx = canvas.getContext("2d");
+
+        canvas.style.width = `${innerWidth}px`;
+        canvas.style.height = `${innerHeight}px`;
+        canvas.width = innerWidth * 2;
+        canvas.height = innerHeight * 2;
+
+        ctx.fillStyle = "#c7e5fe";
+        ctx.fillRect(700, 400, 300, 100);
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+        ctx.moveTo(1000, 400);
+        ctx.lineTo(700, 400);
+        ctx.lineTo(700, 500);
+        ctx.lineTo(1000, 500);
+        ctx.closePath();
+
+        ctx.strokeStyle = "#709ef7";
+        ctx.stroke();
+      };
+    </script>
+  </body>
+</html>

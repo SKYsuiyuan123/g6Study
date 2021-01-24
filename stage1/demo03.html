@@ -1,0 +1,100 @@
+<!--
+ * @Author: sunpeiyuan
+ * @Date: 2021-01-24 21:44:46
+ * @LastEditors: sunpeiyuan
+ * @LastEditTime: 2021-01-24 22:01:03
+ * @Description: 使用复杂数据绘制 g6 - 01
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.1.4/dist/g6.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #graph {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="graph"></div>
+    <script>
+      const data = {
+        nodes: [
+          {
+            id: "node1", // String，该节点存在则必须，节点的唯一标识
+            x: 100, // Number，可选，节点位置的 x 值
+            y: 200, // Number，可选，节点位置的 y 值
+            label: "node1",
+            type: "circle",
+            style: {
+              r: 40,
+              stroke: "#1890ff",
+              lineWidth: 5,
+            },
+          },
+          {
+            id: "node2", // String，该节点存在则必须，节点的唯一标识
+            x: 500, // Number，可选，节点位置的 x 值
+            y: 200, // Number，可选，节点位置的 y 值
+            label: "node2",
+          },
+        ],
+
+        edges: [
+          {
+            source: "node1",
+            target: "node2",
+            type: "line", // 边的类型
+            label: "line", // 边的文字
+          },
+        ],
+      };
+
+      window.onload = () => {
+        const graph = new G6.Graph({
+          container: document.getElementById("graph"),
+
+          width: window.innerWidth,
+          height: window.innerHeight - 40,
+
+          layout: {
+            type: "dagre",
+          },
+
+          // 默认节点配置，也是全局配置
+          defaultNode: {
+            type: "rect",
+            size: [160, 80],
+            color: "#5B8FF9",
+
+            labelCfg: {
+              style: {
+                fill: "#f00",
+                fontSize: 20,
+              },
+            },
+          },
+
+          defaultEdge: {
+            style: {
+              stroke: "#e2e2e2",
+            },
+          },
+        });
+
+        graph.data(data);
+
+        graph.render();
+      };
+    </script>
+  </body>
+</html>

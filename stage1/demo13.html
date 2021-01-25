@@ -2,8 +2,8 @@
  * @Author: sunpeiyuan
  * @Date: 2021-01-24 22:01:33
  * @LastEditors: sunpeiyuan
- * @LastEditTime: 2021-01-25 23:00:13
- * @Description: 自定义节点 - 注册自定义行为 2
+ * @LastEditTime: 2021-01-26 00:21:16
+ * @Description: 自定义 combo（聚合相同类型的节点）
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -28,18 +28,116 @@
     <div id="graph"></div>
 
     <script>
+      // 自定义 combo 需要的数据
       const data = {
         nodes: [
-          { id: "1", label: "node1" },
-          { id: "2", label: "node2" },
-          { id: "3", label: "node3" },
-          { id: "4", label: "node4" },
+          {
+            id: "1",
+            label: "点击提交按钮",
+            comboId: "combo1",
+            x: -400,
+            y: 50,
+          },
+          {
+            id: "2",
+            label: "axios 请求拦截器",
+            comboId: "combo1",
+            x: -200,
+            y: 50,
+          },
+          {
+            id: "3",
+            label: "发起 HTTP 请求",
+            comboId: "combo1",
+            x: 0,
+            y: 50,
+          },
+          {
+            id: "4",
+            label: "HTTP 4 次握手",
+            comboId: "combo2",
+            x: 250,
+            y: 50,
+          },
+          {
+            id: "5",
+            label: "到达服务端",
+            comboId: "combo3",
+            anchorPoints: [
+              [0, 0.5],
+              [1, 0.5],
+              [0.5, 0],
+              [0.5, 1],
+            ],
+            x: 510,
+            y: -50,
+          },
+          {
+            id: "6",
+            label: "将结果存入数据库",
+            comboId: "combo3",
+            anchorPoints: [
+              [0, 0.5],
+              [1, 0.5],
+              [0.5, 0],
+              [0.5, 1],
+            ],
+            x: 510,
+            y: 150,
+          },
         ],
+
         edges: [
-          { source: "1", target: "2" },
-          { source: "1", target: "3" },
-          { source: "2", target: "4" },
-          { source: "3", target: "4" },
+          {
+            id: "edge1",
+            source: "1",
+            target: "2",
+          },
+          {
+            id: "edge2",
+            source: "2",
+            target: "3",
+          },
+          {
+            id: "edge3",
+            source: "3",
+            target: "4",
+          },
+          {
+            id: "edge4",
+            source: "4",
+            target: "5",
+          },
+          {
+            id: "edge5",
+            source: "5",
+            target: "6",
+          },
+        ],
+
+        combos: [
+          {
+            id: "combo1",
+            label: "客户端",
+            size: [600, 400],
+            style: {
+              stroke: "#1890ff",
+            },
+          },
+          {
+            id: "combo2",
+            label: "HTTP",
+            style: {
+              stroke: "#1890ff",
+            },
+          },
+          {
+            id: "combo3",
+            label: "服务器",
+            style: {
+              stroke: "#1890ff",
+            },
+          },
         ],
       };
 
@@ -110,6 +208,7 @@
          */
         G6.registerNode(
           "k-rect",
+
           {
             // 自定义 绘制文本节点 方法
             drawText(cfg, group) {
@@ -224,6 +323,7 @@
               );
             },
           }
+
           // "extendNodeName"
         );
       }
@@ -284,16 +384,152 @@
             );
 
             // console.log(selectedNode);
+
             selectedNode.forEach((node) => {
               node.clearStates(["nodeState:selected", "nodeState:hover"]);
             });
           },
         });
+
+        // 给边定义 自定义行为
+        G6.registerBehavior("edge-active", {
+          getEvents() {
+            return {
+              "edge:mouseenter": "onMouseEnter",
+              "edge:mouseleave": "onMouseLeave",
+            };
+          },
+
+          onMouseEnter(event) {
+            event.item.setState("edgeState:active", true);
+          },
+
+          onMouseLeave(event) {
+            event.item.setState("edgeState:active", false);
+          },
+        });
+      }
+
+      /**
+       * 自定义边
+       */
+      function registerEdge(G6) {
+        G6.registerEdge(
+          "k-edge", // 自定义边 名称
+
+          // 生命周期方法
+          {
+            running: false,
+
+            // 自定义方法 - 动画
+            runAnimate(group) {
+              // 如果动画在执行，就不再重复执行，防止动画被触发。
+              if (this.running) return;
+
+              this.running = true;
+
+              group.toFront();
+
+              let index = 0;
+
+              const path = group.get("children")[0];
+              // console.log(path);
+
+              const dashLine = group.addShape("path", {
+                attrs: {
+                  offset: path.attrs.offset,
+                  path: path.attrs.path,
+                  stroke: "#1890ff",
+                  startArrow: path.attrs.startArrow,
+                  endArrow: path.attrs.endArrow,
+                },
+                name: "edge-dash", // 移除动画时需要
+              });
+
+              // 第一个参数，刷新每一帧 走过的位置
+              // 第二个参数，是否 循环播放
+              dashLine.animate(
+                (radio) => {
+                  index++;
+
+                  return {
+                    lineDash: [2, 1, 2, 4],
+                    lineDashOffset: -index,
+                  };
+                },
+                {
+                  repeat: true, // 是否重复
+                  duration: 3000, // 播放一次动画的时长（配合 repeat: true 的话就会无限播放）
+                }
+              );
+            },
+
+            stopAnimate(group) {
+              const path = group
+                .get("children")
+                .find((item) => item.cfg.name === "edge-dash");
+
+              if (path) {
+                path.remove();
+                this.running = false;
+              }
+            },
+
+            setState(name, value, item) {
+              // console.log(name);
+              const group = item.getContainer();
+
+              if (name === "edgeState:active" && value) {
+                // 鼠标移入 开始动画
+                this.runAnimate(group);
+              } else if (name === "edgeState:active" && !value) {
+                // 鼠标移出 停止动画
+                this.stopAnimate(group);
+              }
+            },
+          },
+
+          "polyline" // 继承节点名称
+        );
+      }
+
+      /**
+       * 自定义 combo
+       */
+      function registerCombo(G6) {
+        G6.registerCombo(
+          "k-combo-rect",
+
+          // 生命周期方法
+          {
+            drawShape(cfg, group) {
+              const style = this.getShapeStyle(cfg);
+
+              const rect = group.addShape("rect", {
+                attrs: {
+                  ...style,
+                  x: -style.width / 2,
+                  y: -style.height / 2,
+                  width: style.width,
+                  height: style.height,
+                },
+                draggable: true,
+                name: "combo-keyShape",
+              });
+
+              return rect;
+            },
+          },
+
+          "rect"
+        );
       }
 
       window.onload = () => {
         registerNode(G6);
         registerBehavior(G6);
+        registerEdge(G6);
+        registerCombo(G6);
 
         const graph = new G6.Graph({
           container: document.getElementById("graph"),
@@ -301,27 +537,25 @@
           width: window.innerWidth - 40,
           height: window.innerHeight - 40,
 
-          layout: {
-            type: "dagre",
-          },
+          // layout: {
+          //   type: "dagre",
+          // },
 
           defaultNode: {
             type: "k-rect",
             style: {
-              width: 180,
-              height: 60,
+              width: 160,
+              height: 40,
               radius: 10,
             },
             labelCfg: {
               style: {
-                fontSize: 20,
+                fontSize: 14,
               },
             },
             anchorPoints: [
-              [0, 0],
-              [1, 0],
-              [0, 1],
-              [1, 1],
+              [0, 0.5],
+              [1, 0.5],
             ],
           },
 
@@ -342,8 +576,28 @@
             },
           },
 
+          defaultEdge: {
+            type: "k-edge", // 使用自定义边
+            // type: "line", // 使用 内置边 line
+            style: {
+              // stroke: "#666",
+              lineAppendWidth: 20, // 响应鼠标事件的检测宽度（边 移入移出时会更容易触发的属性。当 lineWidth 太小而不易选中时，可以通过此参数提升击中的范围。）
+            },
+          },
+
+          defaultCombo: {
+            type: "k-combo-rect",
+            size: [220, 400],
+          },
+
           modes: {
-            default: ["drag-node", "node-hover", "node-select"],
+            default: [
+              "drag-node",
+              "drag-canvas",
+              "node-hover",
+              "node-select",
+              "edge-active",
+            ],
           },
 
           fitCenter: true, // 图的中心将对齐到画布中心，但不缩放

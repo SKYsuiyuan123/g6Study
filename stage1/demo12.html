@@ -2,8 +2,8 @@
  * @Author: sunpeiyuan
  * @Date: 2021-01-24 22:01:33
  * @LastEditors: sunpeiyuan
- * @LastEditTime: 2021-01-25 23:00:13
- * @Description: 自定义节点 - 注册自定义行为 2
+ * @LastEditTime: 2021-01-26 00:21:08
+ * @Description: 自定义边
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -224,6 +224,7 @@
               );
             },
           }
+
           // "extendNodeName"
         );
       }
@@ -289,11 +290,113 @@
             });
           },
         });
+
+        // 给边定义 自定义行为
+        G6.registerBehavior("edge-active", {
+          getEvents() {
+            return {
+              "edge:mouseenter": "onMouseEnter",
+              "edge:mouseleave": "onMouseLeave",
+            };
+          },
+
+          onMouseEnter(event) {
+            event.item.setState("edgeState:active", true);
+          },
+
+          onMouseLeave(event) {
+            event.item.setState("edgeState:active", false);
+          },
+        });
+      }
+
+      /**
+       * 自定义边
+       */
+      function registerEdge(G6) {
+        G6.registerEdge(
+          "k-edge", // 自定义边 名称
+
+          // 生命周期方法
+          {
+            running: false,
+
+            // 自定义方法 - 动画
+            runAnimate(group) {
+              // 如果动画在执行，就不再重复执行，防止动画被触发。
+              if (this.running) return;
+
+              this.running = true;
+
+              group.toFront();
+
+              let index = 0;
+
+              const path = group.get("children")[0];
+              // console.log(path);
+
+              const dashLine = group.addShape("path", {
+                attrs: {
+                  offset: path.attrs.offset,
+                  path: path.attrs.path,
+                  stroke: "#1890ff",
+                  startArrow: path.attrs.startArrow,
+                  endArrow: path.attrs.endArrow,
+                },
+                name: "edge-dash", // 移除动画时需要
+              });
+
+              // 第一个参数，刷新每一帧 走过的位置
+              // 第二个参数，是否 循环播放
+              dashLine.animate(
+                (radio) => {
+                  index++;
+
+                  return {
+                    lineDash: [2, 1, 2, 4],
+                    lineDashOffset: -index,
+                  };
+                },
+                {
+                  repeat: true, // 是否重复
+                  duration: 3000, // 播放一次动画的时长（配合 repeat: true 的话就会无限播放）
+                }
+              );
+            },
+
+            stopAnimate(group) {
+              const path = group
+                .get("children")
+                .find((item) => item.cfg.name === "edge-dash");
+
+              if (path) {
+                path.remove();
+                this.running = false;
+              }
+            },
+
+            setState(name, value, item) {
+              // console.log(name);
+              const group = item.getContainer();
+
+              if (name === "edgeState:active" && value) {
+                // 鼠标移入 开始动画
+                this.runAnimate(group);
+              } else if (name === "edgeState:active" && !value) {
+                // 鼠标移出 停止动画
+                this.stopAnimate(group);
+              }
+            },
+          },
+
+          "polyline" // 继承节点名称
+        );
       }
 
       window.onload = () => {
         registerNode(G6);
         registerBehavior(G6);
+        registerEdge(G6);
 
         const graph = new G6.Graph({
           container: document.getElementById("graph"),
@@ -342,8 +445,15 @@
             },
           },
 
+          defaultEdge: {
+            type: "k-edge", // 使用自定义边
+            style: {
+              lineAppendWidth: 20, // 响应鼠标事件的检测宽度（边 移入移出时会更容易触发的属性。当 lineWidth 太小而不易选中时，可以通过此参数提升击中的范围。）
+            },
+          },
+
           modes: {
-            default: ["drag-node", "node-hover", "node-select"],
+            default: ["drag-node", "node-hover", "node-select", "edge-active"],
           },
 
           fitCenter: true, // 图的中心将对齐到画布中心，但不缩放

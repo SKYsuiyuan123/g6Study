@@ -2,8 +2,8 @@
  * @Author: sunpeiyuan
  * @Date: 2021-01-24 22:01:33
  * @LastEditors: sunpeiyuan
- * @LastEditTime: 2021-01-25 23:00:13
- * @Description: 自定义节点 - 注册自定义行为 2
+ * @LastEditTime: 2021-01-26 00:23:23
+ * @Description: 自定义 边的事件
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -224,6 +224,7 @@
               );
             },
           }
+
           // "extendNodeName"
         );
       }
@@ -291,6 +292,30 @@
         });
       }
 
+      // 给 graph 绑定事件
+      function bindEvents(graph) {
+        graph.on("edge:mouseenter", (e) => {
+          // console.log(e.item);
+          if (e.item) {
+            const model = e.item.get("model");
+
+            model.style.stroke = "#1890ff";
+
+            graph.updateItem(e.item, model);
+          }
+        });
+
+        graph.on("edge:mouseleave", (e) => {
+          if (e.item) {
+            const model = e.item.get("model");
+
+            model.style.stroke = "#e5e5e5";
+
+            graph.updateItem(e.item, model);
+          }
+        });
+      }
+
       window.onload = () => {
         registerNode(G6);
         registerBehavior(G6);
@@ -342,6 +367,12 @@
             },
           },
 
+          defaultEdge: {
+            style: {
+              lineAppendWidth: 20, // 响应鼠标事件的检测宽度（边 移入移出时会更容易触发的属性。当 lineWidth 太小而不易选中时，可以通过此参数提升击中的范围。）
+            },
+          },
+
           modes: {
             default: ["drag-node", "node-hover", "node-select"],
           },
@@ -356,6 +387,9 @@
         graph.on("afterNodeClick", (event) => {
           console.log("画布监听到节点被点击了", event);
         });
+
+        // 调用函数 给 graph 绑定事件
+        bindEvents(graph);
       };
     </script>
   </body>
